@@ -1,0 +1,105 @@
+> #
+> # STAT 484 homework assignment 1
+> # Jennifer Mullen
+> #
+> 
+> 
+> 
+> #
+> # Question 1
+> #
+> 
+> P1 <- c(23,45,67,46,57,23,83,59,12,64)
+> 
+> # What is the maximum value?
+> max(P1)
+[1] 83
+> 
+> # What is the minimum value?
+> min(P1)
+[1] 12
+> 
+> # What is the mean value
+> mean(P1)
+[1] 47.9
+> 
+> 
+> #
+> # Question 2
+> #
+> 
+> # Change the ninth value to 42
+> P1[9] <- 42
+> P1
+ [1] 23 45 67 46 57 23 83 59 42 64
+> 
+> # See how the mean has changed
+> mean(P1)
+[1] 50.9
+> 
+> # How many values are greater than 40?
+> length(P1[P1 > 40])
+[1] 8
+> 
+> # What is the mean of values over 40?
+> mean(P1[which(P1 > 40)])
+[1] 57.875
+> 
+> 
+> #
+> # Question 3
+> #
+> 
+> # the sum of P1
+> sum(P1)
+[1] 509
+> 
+> # the mean (using the sum and length)
+> sum(P1) / length(P1)
+[1] 50.9
+> 
+> # the log(base10) of P1
+> log(x = P1, base = 10)
+ [1] 1.361728 1.653213 1.826075 1.662758 1.755875 1.361728 1.919078 1.770852 1.623249 1.806180
+> 
+> # the difference between each element of P1 and the mean of P1
+> P1 - mean(P1)
+ [1] -27.9  -5.9  16.1  -4.9   6.1 -27.9  32.1   8.1  -8.9  13.1
+> 
+> 
+> #
+> # Question 4 
+> #
+> 
+> 
+> a<-11:20
+> b<-c(2,4,6,8)
+> 
+> # a * 2
+> # prediction: 22 24 26 28 30 32 34 36 38 40
+> a * 2
+ [1] 22 24 26 28 30 32 34 36 38 40
+> 
+> # a[b]
+> # prediction: 12 14 16 18
+> a[b]
+[1] 12 14 16 18
+> 
+> # b[a]
+> # prediction: NA NA NA NA NA NA NA NA NA NA
+> #   because b does not have indices 11-20
+> b[a]
+ [1] NA NA NA NA NA NA NA NA NA NA
+> 
+> # c(a, b)
+> # prediction: 11 12 13 14 15 16 17 18 19 20 2 4 6 8
+> c(a, b)
+ [1] 11 12 13 14 15 16 17 18 19 20  2  4  6  8
+> 
+> # a + b
+> # prediction: 13 16 19 22 17 20 23 26 21 24 
+> #   R will also warn about unequal object length
+> a + b
+ [1] 13 16 19 22 17 20 23 26 21 24
+Warning message:
+In a + b : longer object length is not a multiple of shorter object length
