@@ -1,0 +1,110 @@
+--- 
+title: "STAT 484 Homework 2"
+author: "Jennifer Mullen"
+date: "January 12, 2017"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+## Question 1
+
+**try rep(4,times=5) and rep(c(1,2),each=3)**
+
+```{r} 
+rep(4,times=5) 
+rep(c(1,2),each=3) 
+```
+
+
+**Use rep() to enter the sequence 1 1 1 1 2 2 2 2 3 3 3 3 repeated 3 times**
+```{r}
+(s <- rep(rep(1:3, each=3), each=3))
+```
+
+
+**Now convert it to a factor with the levels “Low”,“Medium”, and “High”**
+```{r}
+f <- factor(s)
+levels(f) <- c("Low","Medium", "High")
+f
+```
+
+
+**Can you change the levels to “Never”,“Rarely”,“Sometimes”?**
+```{r}
+levels(f) <- c("Never","Rarely","Sometimes")
+f
+```
+
+
+## Question 2
+
+**Convert the factor from Problem 1 into a character vector, and save it (assign it a name).**
+```{r}
+(f.chars <- as.factor(as.character(f)))
+```
+
+
+**Can you convert the character vector to a numeric vector?**
+```{r}
+as.numeric(f.chars)
+```
+
+
+## Question 3
+
+
+```{r}
+(a <-factor(scan(text="2 4 3 3 2 1 1 2 3 4 2 3 3 4 1 3 2 1 4 3 2 4")))
+```
+
+
+**Convert a into an ordered factor with levels "Sm","Med","Lg","X-Lg" (with 1 for “Sm”)**
+```{r}
+(levels(a) <- c("Sm", "Med", "Lg", "X-Lg"))
+(a <- ordered(a))
+```
+
+
+**How many values are equal to or larger than “Lg”?**
+```{r}
+(length(a[a >= "Lg"]))
+```
+
+
+## Question 4
+
+*I realized that this question can be interpreted two different ways. The first is to count the number of times # a value appears per die. In other words, if the result of a roll is (1, 1) then the frequency of rolling a 1 is 2. I don't think this is the correct interpretation, but just in case I'm including it here.*
+```{r}
+roll.die1 <- sample(x=1:6, size=1000, replace=TRUE)
+roll.die2 <- sample(x=1:6, size=1000, replace=TRUE)
+roll.all <- c(roll.die1, roll.die2)
+barplot(table(roll.all), col=rainbow(6))
+```
+
+
+
+*The second interpretation, which I believe is the one intended, is to count the frequence of a number appearing per roll of both dice. In this case, rolling (1, 1) would give 1 a frequence of 1, not 2. We can remove the duplicates by combinging both vectors into one, but adding the value of the second only if it does not match the value in the first vector.*
+```{r}
+roll.die1 <- sample(x=1:6, size=1000, replace=TRUE)
+roll.die2 <- sample(x=1:6, size=1000, replace=TRUE)
+roll.unique = c(roll.die1, roll.die2[roll.die2 != roll.die1])
+barplot(table(roll.unique), col=rainbow(6))
+```
+
+
+
+**Extra: What happens if the two dice have different numbers of sides?**
+*The frequency for shared sides will tend to be higher than non-shared.*
+```{r fig.width=10}
+d6 <- sample(x=1:6, size=1000, replace=TRUE)
+d20 <- sample(x=1:20, size=1000, replace=TRUE)
+rolls <- c(d6, d20[d20 != d6])
+barplot(table(rolls), col=rainbow(20), width=0.75)
+```
+
+
+
+
+
