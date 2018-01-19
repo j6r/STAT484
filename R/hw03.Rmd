@@ -1,0 +1,83 @@
+--- 
+title: "STAT 484 Homework 3"
+author: "Jennifer Mullen"
+date: "January 18, 2017"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+# Question 1
+
+The three histograms are shown below. They are not the same.
+
+```{r fig.height=3, fig.width=3, fig.show='hold'} 
+hist(rnorm(100))
+hist(rnorm(100))
+hist(rnorm(100))
+```
+
+------
+
+# Question 2
+
+I don't have a deep background in statistics so I used trial and error to experiment with the bandwidth value. The optimal value for this data was 1 and is drawn in the histogram in red Setting the bandwidth to 0.5 (in blue) resulted in undersmoothing that showed too much variation in the data and didn't clearly show the important peaks. Setting the value to 2 (green) resulted in oversmoothing, hiding the second peak in the bin with values between 50 and 60.
+
+```{r}
+hw <- c(scan(text="26 30 54 25 70 52 51 26 67 18 21 29 17 12 18 35 30 36 36 21 24 18 10 43 28 15 26 27"))
+hist(hw, probability = TRUE, main="Histogram of homework data")
+lines(density(hw, adjust = 2), col="green")
+lines(density(hw, adjust = 1), col="red", lwd = 3)
+lines(density(hw, adjust = .5), col="blue")
+```
+
+------
+
+# Question 3
+
+I created a table to show the mean, median, standard deviation, IQR, and MAD.
+
+```{r}
+hw.q3 <- data.frame(mean(hw), median(hw), sd(hw), IQR(hw), mad(hw))
+colnames(hw.q3) <- c("mean", "median", "sd", "IQR", "MAD")
+library(knitr)
+kable(hw.q3, digits = 2)
+```
+
+
+
+------
+
+# Question 4
+
+The two points shown at the top of the boxplot are outliers. The outlier values are 67 and 70. The boxplot function returns the outlier values and I used this to identify and label the values in the plot.
+
+```{r}
+hw.plotresult <- boxplot(hw)
+for (i in hw.plotresult$out) {
+  text(x=1, y=i, labels=i, pos=4, col = "red", cex = 0.5)
+}
+```
+
+
+I considered that using the trim parameter as shown in the lecture might not be the best approach as it would remove a percentage of data points, not just the outliers already identified. I chose to remove those using the same method as boxplot uses: designating outliers as being values 1.5 times the IQR above the upper quartile. I created a vector without the outliers to make reading code easier.
+
+```{r}
+# upper boundary for the data
+ub <- as.numeric(quantile(hw, probs = .75)) + (1.5 * IQR(hw))
+hw.trimmed <- hw[hw < ub]
+```
+
+
+As with question 2, I created a table with the requested values to make the comparison easier. The mean and median are both lower due to the removal of the large outlier values. The mean and median are closer together. The standard deviation is smaller, which is expected as there is a smaller range of values and less variation. The MAD is also lower.
+
+```{r}
+mean <- c(mean(hw), mean(hw.trimmed))
+median <- c(median(hw), median(hw.trimmed))
+sd <- c(sd(hw), sd(hw.trimmed))
+mad <- c(mad(hw), mad(hw.trimmed))
+hw.q4 <- data.frame(mean, median, sd, mad)
+rownames(hw.q4) <- c("Including outliers", "Excluding outliers")
+library(knitr)
+kable(hw.q4, digits = 2, caption = "Comparison of statistics with and without outliers")
+```
