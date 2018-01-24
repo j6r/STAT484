@@ -1,0 +1,86 @@
+--- 
+title: "STAT 484 Homework 5"
+author: "Jennifer Mullen"
+date: "January 23, 2017"
+output:
+  html_document: default
+---
+
+# Question 1
+
+## ?plot
+
+I have used plot but not really delved into it extensively, as I've used ggplot exclusively before this class. I learned from the help page that you can specify multiple types of plots, create labels and titles, and change the aspect ratio using parameters passed to plot().
+
+I ran the following example, which showed me how to draw points on a plot. 
+
+```{r}
+## Simple quantiles/ECDF, see ecdf() {library(stats)} for a better one:
+plot(x <- sort(rnorm(47)), type = "s", main = "plot(x, type = \"s\")")
+points(x, cex = .5, col = "dark red")
+```
+
+
+
+## ?hist
+
+The most important information I learned from the help page is that hist() and plot() share many of the same parameters, such as xlim, ylim, xlab, and ylab. I also learned that, like plot, it supports using par(). Wile this seems trivial, picking up patterns in a language is very important in learning it. If I know how to use common plot-related paramters I need only to know if a new function supports them, allowing me to concentrate on learning the specifics of a function.
+
+This function is complicated, and without a strong statistical background just reading the description of parameters wasn't enough for me to immediately understand how this function can be used beyond drawing and formatting a simple histogram. For me, this help page would be most useful when I have a defined use case/problem that I need to figure out how to implement—I would be able to focus only on the relevant sections.
+
+I find example code very helpful, often more than descriptions of a function. However, the examples for hist() are just code and don't have descriptions, making it hard to comprehend. It's a bit more clear if I run the code.
+
+Overall, the hist() documentation showed me that the help docs in R are not sufficient for me to learn the language and that I need to use other sources for help.
+
+I ran the following example, which showed me how to draw side-by-side plots.
+
+```{r}
+op <- par(mfrow = c(2, 2))
+hist(islands)
+utils::str(hist(islands, col = "gray", labels = TRUE))
+```
+
+
+
+# Question 2
+
+## ?plot to ?par
+
+On the plot() help page I followed the link for par() and learned that there are a plethora of ways to customize graphics beyond what plot() parameters provide. I think I'll be referring to this extensively throughout the class.
+
+I ran the following example in the console. The plot was drawn in the plot tab without clearing the previous plot from question 1. Every time I re-ran it a new plot was added to the same window. I didn't know that could happen, as normally the plot is replaced. I learned that I may neeed to clear the plot window. I also learned that there is an R variable giving access to environment settings, as shown in the plot as an xaxis label. I think this would be useful information to include in archived reports as updates to the language may introduce changes that alter future reports and prompt questions as to why something looks different.
+
+```{r}
+require(grDevices) # for gray
+## 'fg' use:
+plot(1:12, type = "b", main = "'fg' : axes, ticks and box in gray",
+     fg = gray(0.7), bty = "7" , sub = R.version.string)
+```
+
+
+## ?hist to ?axis.Date
+
+I clicked the link for axis and saw a reference to axis.Date, which I looked up in help. In a previous class I used ggplot to draw a [line plot](https://github.com/j6r/IST402/blob/master/status_analysis/availability_notebook.Rmd) of a HoltWinters prediction over a 24 hour period but could never get the axis to have the correct labels. I think I might have arrived at a solution had I looked at this help page and learned that I could use strptime for formatting dates, as shown in the example I ran below.
+
+```{r}
+with(beaver1, {
+time <- strptime(paste(1990, day, time %/% 100, time %% 100),
+                 "%Y %j %H %M")
+plot(time, temp, type = "l") # axis at 4-hour intervals.
+# now label every hour on the time axis
+plot(time, temp, type = "l", xaxt = "n")
+r <- as.POSIXct(round(range(time), "hours"))
+axis.POSIXct(1, at = seq(r[1], r[2], by = "hour"), format = "%H")
+})
+
+```
+
+
+# Question 3
+
+I searched for "outer product" on RSeek then clicked the "For Beginners" tab on the result page. There were two results and I chose the first, [Matrix Algebra on statmethods.net](https://www.statmethods.net/advstats/matrix.html). I located "Outer product. AB' " in the table of operators and functions and learned that the R syntax is "A %o% B". I used this to create the following solution.
+
+```{r}
+c(2,4,6,8) %o% c(-2,-1,0,1,2,3)
+```
+
