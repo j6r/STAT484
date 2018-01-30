@@ -1,0 +1,88 @@
+---
+title: "Homework 6"
+author: "Jennifer Mullen"
+date: "1/29/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(out.width = "200%")
+knitr::opts_chunk$set(fig.asp = 1)
+```
+
+## Question 1
+
+There is evidence for an association as the p-value is less than 0.05.
+
+```{r cars}
+cyl<-factor(scan(text="6 6 4 6 8 6 8 4 4 6 6 8 8 8 8 8 8 4 4 4 4 8 8 8 8 4 4 4 8 6 8 4"))
+levels(cyl) <- c("lt8", "lt8", "eq8")
+am<-factor(scan(text="1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 1 1 1 1 1 1"))
+tab <- table(am, cyl)
+chisq.test(tab)
+```
+
+## Question 2
+
+There appears to be a linear relationship between the two variables based upon my observation of the scatterplot. 
+
+```{r }
+op <- par(mfrow = (c(2, 2)))
+hist(faithful$waiting, main = "Time between eruptions (waiting)", col = "peachpuff", xlab = "Time (min)")
+hist(faithful$eruptions, main = "Prior eruption length (eruptions)", col = "lightsteelblue3", xlab = "Time (min)")
+plot(x = faithful$eruptions, y = faithful$waiting, main = "Eruption time vs time between eruptions", xlab = "Eruption time (min)", ylab = "Time between eruptions (min)", col = 562)
+# comment for empty spot in plotting matrix
+```
+
+## Question 3
+
+The p-value of 2.2e-16 in the regression indicates that the model is highly significant.
+
+The distribution of residuals is approximately normal and unimodal. The distribution of variables, however, is bimodal.
+
+```{r }
+model = lm(faithful$waiting ~ faithful$eruptions)
+summary(model)
+par(mfrow = c(2, 2))
+hist(faithful$waiting, main = "Time between eruptions (waiting)", col = "peachpuff", xlab = "Time (min)")
+hist(faithful$eruptions, main = "Prior eruption length (eruptions)", col = "lightsteelblue3", xlab = "Time (min)")
+plot(density(model$residuals), main = "Distribution of residuals in model")
+# comment for empty spot in plotting matrix
+```
+
+## Question 4
+
+To determine if the data is suited for regression I examined the distribution of residuals in question 3 and generated plots to check assumptions as described on page 44 of Essential R. The distribution of residuals looks relatively normal, the residuals vs fitted look symmetrical, and the QQ plot is linear. This indicates that the data is suitable for regression. Three outliers were identified but even so the data should be OK.
+
+```{r }
+par(mfrow = c(2, 2))
+plot(model)
+```
+
+
+I saw in the histograms generated in question 2 that eruptions has a bimodal distribution. The logical point at which to cut the data in this type of distribution is at the pit between the two peaks. Using the stem and leaf plot shown below, I determined this value to be 3.07.
+
+```{r}
+stem(faithful$eruptions)
+```
+
+I made a copy of faithful for convenience and cut eruptions at 3.07 to produce a categorical variable. Then I produced the model. The p-value was the same as the previous, showing a correlation between the variables. The residuals, however, indicated more variance than previously. However, the p-value was unchanged.
+
+```{r}
+faithful.cut <- faithful
+faithful.cut$eruptions <- cut(faithful.cut$eruptions, breaks = c(0, 3.07, max(faithful.cut$eruptions)), labels = c("short", "long"))
+model.cut <- lm(formula = faithful.cut$waiting ~ faithful.cut$eruptions)
+summary(model.cut)
+```
+
+
+For the final part of this question, I'd expect changing the breaks to affect the residuals, r-squared value, and p-value. As you move further away from the pit the variance and residuals will increase, which will affect the p-value. I tried this with other values for breaks, such as the one below, and observed this affect. However, the p-value still indicates evidence that there is correlation between the two variables.
+
+```{r}
+faithful.cut2 <- faithful
+faithful.cut2$eruptions <- cut(faithful.cut2$eruptions, breaks = c(0, 2, max(faithful.cut2$eruptions)), labels = c("short", "long"))
+model.cut <- lm(formula = faithful.cut2$waiting ~ faithful.cut2$eruptions)
+summary(model.cut)
+```
+
