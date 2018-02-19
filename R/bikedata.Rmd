@@ -1,0 +1,52 @@
+---
+title: "Using the bikedata package"
+author: "Jennifer Mullen"
+date: "February 17, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Summary
+
+
+# Data Description
+
+
+MENTION INDEGO ISSUES HERE
+
+
+# Functions
+
+
+# Applications
+
+The bikedata package provides system operators a standardized data structure and methods to make the process of extracting and visualizing data simple.
+
+
+
+
+# Examples
+
+## Setup
+
+
+## System PKIs
+
+
+
+
+
+# Additional information
+
+Bikedata requires these additional packages:  selectr, irlba, rvest, bit, igraph, osmdata, rbenchmark, sp, curl, openssl, bit64, blob, memoise, pkgconfig, plogr, DBI, dodgr, httr, lubridate, RSQLite, xml2, BH. INSERT INFO ABOUT LIBXML HERE
+
+# References
+
+North American Bike Share Association (2017) General Bikeshare Feed Specification (GBFS). Retrieved from https://github.com/NABSA/gbfs/blob/master/gbfs.md. 
+
+Padgham, M., & Ellison, R. (2017). Package "bikedata". Retrieved from https://cran.r-project.org/web/packages/bikedata/bikedata.pdf. 
+
+Padgham, M. (2017). bikedata. Retrieved from https://cran.r-project.org/web/packages/bikedata/vignettes/bikedata.html. 
