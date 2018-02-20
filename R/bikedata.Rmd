@@ -7,9 +7,17 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(bikedata)
+library(ggplot2)
+library(ggmap)
 ```
 
-# Summary
+# Introduction
+
+Bikedata is an R package that streamlines the process of obtaining, loading, manipulating, and querying the public data provided by bicycle share systems. 
+
+Bikedata stores data in an SQLite database and provides functions for common operations, freeing the user from writing sql queries. The user can access data without needing to learn SQL or update their existing reports if the underlying structure of the database changes. If the user needs additional information that the package does not provide, the SQLite database is available for use within R or by other applications.
+
 
 
 # Data Description
@@ -23,7 +31,7 @@ MENTION INDEGO ISSUES HERE
 
 # Applications
 
-The bikedata package provides system operators a standardized data structure and methods to make the process of extracting and visualizing data simple.
+The bikedata package provides system operators a standardized data structure and methods to make the process of extracting and visualizing data simple. System operators can use it to build reports containing PKIs for the system such as average daily trips and the number of trips for each station. It can also be used to generate reports for future planning.
 
 
 
@@ -32,8 +40,74 @@ The bikedata package provides system operators a standardized data structure and
 
 ## Setup
 
+```{r}
+
+```
+
+
+## Loading data
+
+Before downloading data, the database location is defined. The location is a temporary directory for this example, but in normal use the database would be stored in a permanent location.
+
+Bikedata provides the store_bikedata() function to download data and store it in the SQLite database. The user can specify cities and dates. Restricting the data downloaded is recommended as the amount of data available is vast. TODO MORE SPECIFIC DEFINITION OF VAST. For this example, I'll use January 2017 data from NYC's Citibike system. 
+
+The index_bikedata_db() function creates indexes on the SQLite database to speed up query speed. This is another function that bikedata provides to abstract away the need to know the database structure and create SQL queries.
+
+```{r}
+data_dir <- tempdir()
+bikedb <- file.path (data_dir, 'bikedb')
+store_bikedata(bikedb = bikedb, city = 'ny', dates = 201701)
+index_bikedata_db(bikedb = bikedb)
+```
+
+
+## Getting a list of stations
+
+The bike_stations() function retrieves the list of stations and their geographic information from the database. The city parameter can be used to restrict the number of stations. Citibike is a large system with 660 stations (some of which represent stations that were removed from service or relocated).
+
+```{r}
+bike_stations(bikedb, city = 'ny')
+```
+
+
+
+
+## Generate a map of stations
+
+The bikestation data can be used with ggplot2 and ggmap to generate a map of stations. The large number of stations results in a cluttered map, so for this example I'll subset the stations using longitude and latitude.
+
+0. Extract the stations with bike_stations(), then use subset to restrict the dataset.
+0. Get the approximate boundaries of the map using the minimum and maximum coordinates from the station list. 
+0. Fetch a map using ggmap.
+0. Plot the map and the stations using ggplot2.
+
+```{r fig.width=12, fig.asp=1}
+stations <- subset(bike_stations(bikedb, city = 'ny'), latitude >= 40.700 & latitude <= 40.720 & longitude >= -74.020 & longitude <= -73.990)
+stations <- stations[1:50,]
+stations.boundaries <- c(as.numeric(min(stations$longitude)), as.numeric(min(stations$latitude)), as.numeric(max(stations$longitude)), as.numeric(max(stations$latitude)))
+myMap <- get_map(location = stations.boundaries, source="stamen", maptype="toner-lite", crop=FALSE, messaging = FALSE) 
+
+ggmap(myMap) + 
+  geom_point(data = stations, aes(x = longitude, y = latitude), color = "red", size = 10) +
+  geom_label(data = stations,  aes(x = longitude, y = latitude, label = stn_id, hjust = -0.2), size = 10, color = "red")
+```
+
+
 
 ## System PKIs
+
+System operators need data to gauge the health of the system. The bike_summary_stats() function provides an overview. As shown below, people took 739,602 trips using Citibike in January 2017. The system has 660 stations. The first and last trip columns show the time period for the report and latest_files indicates that data is available for later time periods.
+
+```{r}
+bike_summary_stats(bikedb)
+```
+
+
+The bike_daily_trips() function produces a summary of trips taken in the system by day.
+
+```{r}
+bike_daily_trips(bikedb = bikedb, city = 'ny')
+```
 
 
 
