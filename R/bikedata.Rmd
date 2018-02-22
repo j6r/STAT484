@@ -10,46 +10,41 @@ knitr::opts_chunk$set(echo = TRUE)
 library(bikedata)
 library(ggplot2)
 library(ggmap)
+library(reshape2)
 ```
 
 # Introduction
 
-Bikedata is an R package that streamlines the process of obtaining, loading, manipulating, and querying the public data provided by bicycle share systems. 
+Bikedata is an R package that streamlines the process of obtaining, loading, manipulating, and querying the public data provided by bicycle share systems. These systems rent bicycles for trips between two bike stations (also called docks) where bicycles are locked. People can unlock the bicycles using a keyfob (for members) or by using a payment kiosk. Bikes must be returned to any station within a time period, generally between 30 and 60 minutes.
 
-Bikedata stores data in an SQLite database and provides functions for common operations, freeing the user from writing sql queries. The user can access data without needing to learn SQL or update their existing reports if the underlying structure of the database changes. If the user needs additional information that the package does not provide, the SQLite database is available for use within R or by other applications.
+Participating systems provide the following data for each trip (a single ride):
+- start time
+- end time
+- start station ID
+- end station ID
+- optional demographic data
 
+The systems also provide a list of stations with the following data:
+- station ID
+- station name (if used)
+- latitude
+- longitude
 
+The bikedata package pulls this information from the system providers' data files, converts it to a standard format, and stores it in an SQLite database. The package provides functions for common operations, freeing the user from writing sql queries. The user can access data without needing to learn SQL or update their existing reports if the underlying structure of the database changes. If the user needs additional information that the package does not provide, the SQLite database is available for use within R or by other applications.
 
-# Data Description
-
-
-MENTION INDEGO ISSUES HERE
-
-
-# Functions
-
-
-# Applications
-
-The bikedata package provides system operators a standardized data structure and methods to make the process of extracting and visualizing data simple. System operators can use it to build reports containing PKIs for the system such as average daily trips and the number of trips for each station. It can also be used to generate reports for future planning.
-
-
+This document describes multiple functions of bikedata and how it can be used to provide visualizations.
 
 
-# Examples
+# Applications and examples
 
-## Setup
-
-```{r}
-
-```
+The bikedata package provides system operators a standardized data structure and methods to make the process of extracting and visualizing data simple. System operators can use it to build reports containing PKIs for the system such as the number of trips taken each day and the number of trips for each station. It can also be used to generate reports for future planning.
 
 
-## Loading data
+## Initialization and loading data
 
-Before downloading data, the database location is defined. The location is a temporary directory for this example, but in normal use the database would be stored in a permanent location.
+Before downloading data, the database location is defined. The location is a temporary directory for this example, but in normal usage the database would be stored in a permanent location.
 
-Bikedata provides the store_bikedata() function to download data and store it in the SQLite database. The user can specify cities and dates. Restricting the data downloaded is recommended as the amount of data available is vast. TODO MORE SPECIFIC DEFINITION OF VAST. For this example, I'll use January 2017 data from NYC's Citibike system. 
+Bikedata provides the store_bikedata() function to download data and store it in the SQLite database. The user can specify cities and dates. Restricting the data downloaded is recommended as the amount of data available is massive. For this project I will use Citibike's January 2017 trip data, which contains 739,602 trip entries.
 
 The index_bikedata_db() function creates indexes on the SQLite database to speed up query speed. This is another function that bikedata provides to abstract away the need to know the database structure and create SQL queries.
 
@@ -76,22 +71,26 @@ bike_stations(bikedb, city = 'ny')
 
 The bikestation data can be used with ggplot2 and ggmap to generate a map of stations. The large number of stations results in a cluttered map, so for this example I'll subset the stations using longitude and latitude.
 
-0. Extract the stations with bike_stations(), then use subset to restrict the dataset.
-0. Get the approximate boundaries of the map using the minimum and maximum coordinates from the station list. 
-0. Fetch a map using ggmap.
-0. Plot the map and the stations using ggplot2.
+1. Extract the stations with bike_stations(), then use subset to restrict the dataset.
+1. Get the approximate boundaries of the map using the minimum and maximum coordinates from the station list. 
+1. Fetch a map using ggmap.
+1. Plot the map and the stations using ggplot2.
 
 ```{r fig.width=12, fig.asp=1}
 stations <- subset(bike_stations(bikedb, city = 'ny'), latitude >= 40.700 & latitude <= 40.720 & longitude >= -74.020 & longitude <= -73.990)
 stations <- stations[1:50,]
 stations.boundaries <- c(as.numeric(min(stations$longitude)), as.numeric(min(stations$latitude)), as.numeric(max(stations$longitude)), as.numeric(max(stations$latitude)))
-myMap <- get_map(location = stations.boundaries, source="stamen", maptype="toner-lite", crop=FALSE, messaging = FALSE) 
-
-ggmap(myMap) + 
-  geom_point(data = stations, aes(x = longitude, y = latitude), color = "red", size = 10) +
-  geom_label(data = stations,  aes(x = longitude, y = latitude, label = stn_id, hjust = -0.2), size = 10, color = "red")
 ```
 
+```{r message=FALSE, error=FALSE, warning=FALSE}
+myMap <- get_map(location = stations.boundaries, source="stamen", maptype="toner-lite", crop=FALSE, messaging = FALSE) 
+```
+
+```{r fig.width=12, fig.asp=1}
+ggmap(myMap) + 
+  geom_point(data = stations, aes(x = longitude, y = latitude), color = "red") +
+  geom_label(data = stations,  aes(x = longitude, y = latitude, label = name, hjust = -0.1), color = "red")
+```
 
 
 ## System PKIs
@@ -103,19 +102,122 @@ bike_summary_stats(bikedb)
 ```
 
 
-The bike_daily_trips() function produces a summary of trips taken in the system by day.
+The bike_daily_trips() function produces a summary of trips taken in the system by day. 
 
 ```{r}
-bike_daily_trips(bikedb = bikedb, city = 'ny')
+trips <- bike_daily_trips(bikedb = bikedb, city = 'ny')
+head(trips)
+```
+
+Plotting this data as a time series gives insight into system usage.
+
+```{r}
+plot(trips, xlab = "Date", ylab = "trips", main = "Trips taken in January by day") 
+lines(trips$date, trips$numtrips, type = "l")
 ```
 
 
 
+System operators may also want to view statistics for different demographics, such as by member status. Bikedata makes this information available, but requires postprocessing for display. 
+
+```{r}
+trips.members <- bike_daily_trips(bikedb = bikedb, member = TRUE)
+trips.members$membership <- "yes"
+trips.nonmembers <- bike_daily_trips(bikedb = bikedb, member = FALSE)
+trips.nonmembers$membership <- "no"
+trips.bymembership <- rbind(trips.members, trips.nonmembers)
+ggplot(data = trips.bymembership) +
+  ggtitle("Trips taken in January, member vs nonmember") +
+  xlab("Date") +
+  ylab("Trips") +
+  geom_line(show.legend = TRUE, aes(x = date, y = numtrips, group = membership, color = membership)) 
+```
+
+## Station popularity
+
+The number of trips originating from or ending at a station is an important metric in determining the popularity and usage of a station. The function bike_tripmat() extracts counts of trips between two stations. It takes parameters that restrict the data to specific cities, dates, times, or demographic groups. 
+
+The following figure shows the top 10 stations overall from which trips start.
+
+```{r}
+tripmat <- bike_tripmat(bikedb = bikedb)
+tripmat_rowsums <- rowSums(tripmat)
+head(sort(tripmat_rowsums, decreasing = TRUE), n = 10)
+```
+
+The parameters provided by bike_tripmat() allow for more detailed analysis, such as determining station popularity by membership status. As shown below, the top 10 stations for each group are different.
 
 
-# Additional information
+```{r }
+tripmat_member_sums <- rowSums(bike_tripmat(bikedb, member = 1))
+tripmat_nonmember_sums <- rowSums(bike_tripmat(bikedb, member = 0))
 
-Bikedata requires these additional packages:  selectr, irlba, rvest, bit, igraph, osmdata, rbenchmark, sp, curl, openssl, bit64, blob, memoise, pkgconfig, plogr, DBI, dodgr, httr, lubridate, RSQLite, xml2, BH. INSERT INFO ABOUT LIBXML HERE
+# Top 10 for members
+head(sort(tripmat_member_sums, decreasing = TRUE), n = 10)
+# Top 10 for non-members
+head(sort(tripmat_nonmember_sums, decreasing = TRUE), n = 10)
+```
+
+The data can be further refined for more close analysis. For example, the most popular starting stations for commuting in the morning can be found by specifying Monday through Friday (weekdays 2 to 6) and the time period from 6:00 am to 10:00 am.
+
+```{r}
+tripmat_member_weekday_sums <- rowSums(bike_tripmat(bikedb, member = 1, weekday = c(2:6), start_time = "6:00", end_time = "10:00"))
+head(sort(tripmat_member_weekday_sums, decreasing = TRUE))
+```
+
+
+## Station to station
+
+System operators may also want to see how many trips are taken between two stations. This information can be very valuable for understanding how bikes move through the system and optimizing rebalancing bikes between stations. The data is also useful for targeted advertising; businesses could purchase ads for display at the stations from which bike trips ending in their area originate. 
+
+The figure below shows the heat map of trips taken between the first 20 stations in the matrix. The highest number of trips are between stations 128 and 151 in both directions.
+
+```{r fig.width=9}
+tripmat <- bike_tripmat(bikedb)
+tripmat_melted <- melt(tripmat[1:20, 1:20])
+ggplot(data = tripmat_melted, aes(x = Var1, y = Var2)) + 
+    geom_tile(aes(fill = value), width = 0.9, height = 0.9, size = 2) + 
+    scale_fill_gradient(low = "lightblue", high = "darkblue") + 
+    xlab("Start station") + ylab("End station") +
+    theme_minimal()
+```
+
+
+## Destinations
+
+Bikedata can also be used to visualize where people travel. For example, how many trips are taken from station ny335 to each destination? This data can be obtained using bike_tripmat() then combining it with bike_stations() to make a map showing each destination as a point with the number of trips determining the point size and color. Popular stations are easily identifiable.
+
+```{r fig.width=12, fig.asp=1}
+# Extract data for station ny335
+ny335_trips <- melt(tripmat["ny335",])
+colnames(ny335_trips) <- c("trips")
+# Keep only destination stations with trips
+ny335_trips <- subset(ny335_trips, ny335_trips$trips > 0) 
+# add station metadata
+ny335_trips <- merge(ny335_trips, stations, by.x = "row.names", by.y = "stn_id")
+head(ny335_trips)
+
+```
+
+```{r message=FALSE, warning=FALSE, error=FALSE}
+# download maps for the area
+# suppress messages because get_map() is overly chatty even with messaging disabled
+ny335_boundaries <- c(as.numeric(min(ny335_trips$longitude)), as.numeric(min(ny335_trips$latitude)), as.numeric(max(ny335_trips$longitude)), as.numeric(max(ny335_trips$latitude)))
+ny335_maps <- get_map(location = ny335_boundaries, source="stamen", maptype="toner-lite", crop=FALSE, messaging = FALSE) 
+```
+
+
+```{r}
+# create the map
+ggmap(ny335_maps) + 
+  geom_point(data = ny335_trips, aes(x = longitude, y = latitude, size = trips, color = trips)) +
+  scale_color_gradient2(low = "yellow", high = "red", mid = "orange") +
+  xlab("Longitude") + ylab("Latitude") + ggtitle("Destination for trips starting at station 335")
+
+
+```
+
+
 
 # References
 
@@ -124,3 +226,5 @@ North American Bike Share Association (2017) General Bikeshare Feed Specificatio
 Padgham, M., & Ellison, R. (2017). Package "bikedata". Retrieved from https://cran.r-project.org/web/packages/bikedata/bikedata.pdf. 
 
 Padgham, M. (2017). bikedata. Retrieved from https://cran.r-project.org/web/packages/bikedata/vignettes/bikedata.html. 
+
+STHDA. (n.d.). ggplot2: Quick correlation matrix heatmap - R software and data visualization. Retrieved from http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization.
