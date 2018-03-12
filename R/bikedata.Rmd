@@ -89,7 +89,7 @@ myMap <- get_map(location = stations.boundaries, source="stamen", maptype="toner
 ```{r fig.width=12, fig.asp=1}
 ggmap(myMap) + 
   geom_point(data = stations, aes(x = longitude, y = latitude), color = "red") +
-  geom_label(data = stations,  aes(x = longitude, y = latitude, label = name, hjust = -0.1), color = "red")
+  geom_label(data = stations,  aes(x = longitude, y = latitude, label = stn_id, hjust = -0.2), color = "red")
 ```
 
 
